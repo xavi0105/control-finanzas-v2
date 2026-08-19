@@ -20,25 +20,26 @@ export function FinanceProvider({ children }) {
     setLoading(true)
     setError(null)
     try {
-      const [accRes, catRes, traRes, goalRes, budRes, planRes] = await Promise.all([
+      const [accRes, catRes, traRes, goalRes, budRes] = await Promise.all([
         supabase.from('accounts').select('*').order('name'),
         supabase.from('categories').select('*').order('type', { ascending: true }).order('name'),
         supabase.from('transactions').select('*').order('date', { ascending: false }).limit(1000),
         supabase.from('goals').select('*').order('created_at'),
-        supabase.from('budgets').select('*'),
-        supabase.from('planned_expenses').select('*').order('next_due')
+        supabase.from('budgets').select('*')
       ])
 
-      for (const res of [accRes, catRes, traRes, goalRes, budRes, planRes]) {
+      for (const res of [accRes, catRes, traRes, goalRes, budRes]) {
         if (res.error) throw res.error
       }
+
+      const planRes = await supabase.from('planned_expenses').select('*').order('next_due')
 
       setAccounts(accRes.data)
       setCategories(catRes.data)
       setTransactions(traRes.data)
       setGoals(goalRes.data)
       setBudgets(budRes.data)
-      setPlannedExpenses(planRes.data)
+      setPlannedExpenses(planRes.error ? [] : planRes.data)
     } catch (err) {
       setError(err.message)
     } finally {
