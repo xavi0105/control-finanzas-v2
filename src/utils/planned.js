@@ -10,7 +10,11 @@ export const FREQUENCIES = [
   { value: 'annual', label: 'Anual' }
 ]
 
-export const EXPENSE_ICONS = ['💧', '🔌', '🔥', '📶', '🏠', '📱', '💳', '📺', '🚌', '🛡️', '🎮', '📚', '🧾', '⚡', '💡', '🚗']
+export const EXPENSE_ICONS = [
+  '💧', '🔌', '🔥', '💡', '📶', '🏠', '📱', '💳', '📺', '🚌', '🛡️', '🎮', '📚', '🧾', '⚡', '🚗',
+  '🛒', '🏥', '💊', '🍔', '☕', '🎓', '✈️', '🎁', '🐾', '🏋️', '💇', '🛠️', '⛽', '📦', '💸', '🏦',
+  '🎵', '🍺', '🥤', '💻', '🖥️', '🏫', '👶', '🐈', '🪴', '🎂', '🧹', '🚖', '🅿️', '🗞️', '💈', '🦷'
+]
 
 export function frequencyLabel(value) {
   return FREQUENCIES.find((f) => f.value === value)?.label || 'Mensual'

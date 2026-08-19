@@ -429,6 +429,61 @@ button.chip:hover { filter: brightness(1.2); }
 .account-card-icon.small { width: 28px; height: 28px; font-size: 0.95rem; display: inline-flex; vertical-align: middle; margin-right: 0.2rem; }
 .planned-list { display: flex; flex-direction: column; gap: 0.5rem; }
 
+/* Badge de banco / emisor (mini-logo con colores de marca) */
+.bank-badge {
+  width: 42px; height: 42px; border-radius: 12px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 0.72rem; letter-spacing: 0.02em; text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+.bank-picker { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.bank-pick {
+  min-width: 46px; height: 34px; padding: 0 0.6rem; border: 2px solid var(--border);
+  border-radius: 9px; background: var(--card); color: var(--text);
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; cursor: pointer; transition: 0.15s;
+}
+.bank-pick.active { border-color: var(--indigo-600); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25); transform: scale(1.06); }
+
+/* Sección "Gastos planeados del mes" (Dashboard) */
+.planned-hero {
+  display: grid; grid-template-columns: 1fr 1.4fr; gap: 1rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(14, 165, 233, 0.08));
+  border: 1px solid var(--border); border-radius: 14px; padding: 1rem 1.2rem; margin-bottom: 1rem;
+}
+.planned-hero > div { display: flex; flex-direction: column; gap: 0.15rem; }
+.planned-hero-total strong { font-size: 1.5rem; }
+.planned-badge {
+  align-self: flex-start; margin-top: 0.25rem;
+  background: var(--indigo-600); color: #fff; font-size: 0.68rem; font-weight: 700;
+  padding: 0.15rem 0.55rem; border-radius: 999px;
+}
+.planned-hero-next strong { font-size: 1rem; }
+.planned-countdown {
+  align-self: flex-start; font-size: 0.72rem; font-weight: 700;
+  background: var(--accent-soft, #fef3c7); color: #b45309; padding: 0.15rem 0.6rem; border-radius: 999px;
+}
+.planned-timeline { position: relative; padding-left: 0.5rem; }
+.planned-item { position: relative; display: flex; gap: 0.8rem; padding-bottom: 0.85rem; }
+.planned-item:last-child { padding-bottom: 0; }
+.planned-item::before {
+  content: ''; position: absolute; left: 21px; top: 42px; bottom: -0.85rem; width: 2px;
+  background: linear-gradient(180deg, var(--indigo-600), transparent);
+}
+.planned-item:last-child::before { display: none; }
+.planned-dot {
+  width: 42px; height: 42px; border-radius: 50%; flex: none; z-index: 1;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem;
+  background: var(--surface-2, #eef2ff); border: 2px solid var(--indigo-600);
+}
+.planned-body { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; padding-top: 0.2rem; }
+.planned-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
+.planned-date { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
+.planned-bottom { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
+.planned-amount { font-weight: 700; color: var(--red); }
+@media (max-width: 560px) {
+  .planned-hero { grid-template-columns: 1fr; }
+}
+
 /* ---------- Presupuestos ---------- */
 .budget-form { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.1rem; }
 .budget-form select, .budget-form input {

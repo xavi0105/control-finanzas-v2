@@ -16,6 +16,7 @@ create table if not exists public.accounts (
   pay_day integer,
   interest_rate numeric(6,2) not null default 0,
   icon text,
+  bank text,
   fee_type text check (fee_type in ('monthly', 'annual')),
   fee_amount numeric(14,2),
   fee_day integer,
@@ -31,6 +32,7 @@ alter table public.accounts add column if not exists cut_day integer;
 alter table public.accounts add column if not exists pay_day integer;
 alter table public.accounts add column if not exists interest_rate numeric(6,2) not null default 0;
 alter table public.accounts add column if not exists icon text;
+alter table public.accounts add column if not exists bank text;
 alter table public.accounts add column if not exists fee_type text;
 alter table public.accounts add column if not exists fee_amount numeric(14,2);
 alter table public.accounts add column if not exists fee_day integer;

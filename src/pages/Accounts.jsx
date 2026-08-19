@@ -4,6 +4,7 @@ import { useFinance } from '../context/FinanceContext'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { formatMoney, computeBalance, isCredit, accountBalanceDisplay, ACCOUNT_TYPES, accountTypeLabel } from '../utils/format'
+import { BANKS, bankByCode, bankBadgeStyle } from '../utils/banks'
 import Modal from '../components/Modal'
 import Loader from '../components/Loader'
 import { useToast } from '../context/ToastContext'
@@ -20,6 +21,7 @@ const emptyForm = {
   pay_day: '',
   interest_rate: '',
   icon: '',
+  bank: '',
   fee_enabled: false,
   fee_type: 'annual',
   fee_amount: '',
@@ -71,6 +73,7 @@ export default function Accounts() {
       pay_day: a.pay_day ?? '',
       interest_rate: a.interest_rate ?? '',
       icon: a.icon || '',
+      bank: a.bank || '',
       fee_enabled: Boolean(a.fee_type),
       fee_type: a.fee_type || 'annual',
       fee_amount: a.fee_amount ?? '',
@@ -98,6 +101,7 @@ export default function Accounts() {
       pay_day: form.pay_day === '' ? null : Number(form.pay_day),
       interest_rate: form.interest_rate === '' ? 0 : Number(form.interest_rate),
       icon: form.icon || null,
+      bank: form.bank || null,
       fee_type: form.fee_enabled ? form.fee_type : null,
       fee_amount: form.fee_enabled && form.fee_amount !== '' ? Number(form.fee_amount) : null,
       fee_day: form.fee_enabled && form.fee_day !== '' ? Number(form.fee_day) : null,
@@ -160,7 +164,11 @@ export default function Accounts() {
               className={`card account-card${isCredit(a) ? ' credit' : ''}${a.balance < 0 ? ' negative' : ''}`}
             >
               <div className="account-card-head">
-                <span className="account-card-icon">{accountIcon(a)}</span>
+                {a.bank && bankByCode(a.bank) ? (
+                  <span className="bank-badge" style={bankBadgeStyle(a.bank)}>{bankByCode(a.bank).short}</span>
+                ) : (
+                  <span className="account-card-icon">{accountIcon(a)}</span>
+                )}
                 <div>
                   <h3>{a.name}</h3>
                   <small className="muted">{accountTypeLabel(a.type)}</small>
@@ -258,6 +266,25 @@ export default function Accounts() {
             </div>
           </div>
 
+          <div className="field">
+            <label>Banco / emisor (opcional)</label>
+            <div className="bank-picker">
+              {BANKS.map((b) => (
+                <button
+                  key={b.code}
+                  type="button"
+                  className={`bank-pick${form.bank === b.code ? ' active' : ''}`}
+                  style={b.code !== 'none' ? { background: b.color, color: '#ffffff' } : undefined}
+                  onClick={() => setForm({ ...form, bank: b.code })}
+                  title={b.name}
+                >
+                  {b.short}
+                </button>
+              ))}
+            </div>
+            <small className="muted">Se mostrará como insignia con los colores del banco en lugar del emoji.</small>
+          </div>
+
           {isCreditForm ? (
             <div className="credit-fields">
               <div className="form-row">
@@ -327,7 +354,7 @@ export default function Accounts() {
                   <div className="field">
                     <label htmlFor="acc-reminder-days">Anticipación del recordatorio (días)</label>
                     <input id="acc-reminder-days" type="number" min="0" max="60" value={form.reminder_days} onChange={(e) => setForm({ ...form, reminder_days: e.target.value })} />
-                    <small className="muted">Recibirás alertas en la app y por correo este número de días antes del cobro.</small>
+                    <small className="muted">Recibirás alertas en la app este número de días antes del cobro.</small>
                   </div>
                 </div>
               )}

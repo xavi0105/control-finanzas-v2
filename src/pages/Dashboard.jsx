@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, BellRing } from 'lucide-react'
+import { ArrowRight, BellRing, CalendarClock } from 'lucide-react'
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -17,7 +17,7 @@ import { useFinance } from '../context/FinanceContext'
 import { formatMoney, computeBalance, isCredit, getCurrency, formatMonth, formatDate } from '../utils/format'
 import { monthKey, budgetProgress } from '../utils/budget'
 import { feeReminders, feeReminderText } from '../utils/fees'
-import { upcomingWithin } from '../utils/planned'
+import { upcomingWithin, frequencyLabel } from '../utils/planned'
 import Loader from '../components/Loader'
 import StatCard from '../components/StatCard'
 
@@ -168,6 +168,19 @@ export default function Dashboard() {
   const incomeDelta = deltaPct(metrics.cur.income, metrics.prev.income)
   const expenseDelta = deltaPct(metrics.cur.expense, metrics.prev.expense)
 
+  const monthPlanned = useMemo(() => {
+    const month = now.format('YYYY-MM')
+    const items = plannedExpenses
+      .filter((e) => e.active !== false && dayjs(e.next_due).format('YYYY-MM') === month)
+      .map((e) => ({ ...e, days: dayjs(e.next_due).diff(now, 'day') }))
+      .sort((a, b) => a.days - b.days)
+    return {
+      items,
+      total: items.reduce((s, e) => s + Number(e.amount), 0),
+      next: items[0]
+    }
+  }, [plannedExpenses, now])
+
   if (loading) return <Loader />
 
   return (
@@ -265,6 +278,46 @@ export default function Dashboard() {
                 </div>
               )
             })}
+          </div>
+        </section>
+      )}
+
+      {monthPlanned.items.length > 0 && (
+        <section className="card">
+          <div className="card-head">
+            <h3><CalendarClock size={16} /> Gastos planeados del mes</h3>
+            <Link to="/gastos" className="link">Gestionar</Link>
+          </div>
+          <div className="planned-hero">
+            <div className="planned-hero-total">
+              <small className="muted">Total del mes</small>
+              <strong>{formatMoney(monthPlanned.total)}</strong>
+              <span className="planned-badge">{monthPlanned.items.length} pagos</span>
+            </div>
+            <div className="planned-hero-next">
+              <small className="muted">Siguiente pago</small>
+              <strong>{monthPlanned.next.icon || '🧾'} {monthPlanned.next.name}</strong>
+              <span className="planned-countdown">
+                {monthPlanned.next.days === 0 ? 'vence HOY' : monthPlanned.next.days === 1 ? 'mañana' : `en ${monthPlanned.next.days} días`}
+              </span>
+            </div>
+          </div>
+          <div className="planned-timeline">
+            {monthPlanned.items.map((e) => (
+              <div key={e.id} className="planned-item">
+                <span className="planned-dot">{e.icon || '🧾'}</span>
+                <div className="planned-body">
+                  <div className="planned-top">
+                    <strong>{e.name}</strong>
+                    <span className="planned-date">{formatDate(e.next_due)}</span>
+                  </div>
+                  <div className="planned-bottom">
+                    <span className="muted small">{frequencyLabel(e.frequency)}</span>
+                    <span className="planned-amount">{formatMoney(e.amount)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
       )}
