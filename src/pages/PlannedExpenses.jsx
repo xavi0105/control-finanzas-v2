@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Pencil, Trash2, CalendarClock, Check, Wallet, PiggyBank, AlertTriangle } from 'lucide-react'
+import { Plus, Pencil, Trash2, CalendarClock, Check, Wallet, PiggyBank, AlertTriangle, RotateCcw } from 'lucide-react'
 import { useFinance } from '../context/FinanceContext'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -108,6 +108,23 @@ export default function PlannedExpenses() {
     }
   }
 
+  const undoPaid = async (e) => {
+    const txs = transactions.filter((t) => t.planned_expense_id === e.id)
+    if (txs.length === 0) {
+      showToast('No hay un pago registrado para este gasto.', '⚠️')
+      return
+    }
+    const tx = txs.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))[0]
+    const { error: dErr } = await supabase.from('transactions').delete().eq('id', tx.id)
+    if (dErr) { showToast(dErr.message, '❌'); return }
+    if (tx.paid_previous_due) {
+      const { error: uErr } = await supabase.from('planned_expenses').update({ next_due: tx.paid_previous_due }).eq('id', e.id)
+      if (uErr) { showToast(uErr.message, '❌'); return }
+    }
+    reload()
+    showToast(`Pago de "${e.name}" desmarcado: se eliminó el gasto registrado y se restauró la fecha.`, '↩️')
+  }
+
   if (loading) return <Loader />
 
   const disponible = accounts.filter((a) => !isCredit(a)).reduce((s, a) => s + computeBalance(a, transactions), 0)
@@ -115,6 +132,7 @@ export default function PlannedExpenses() {
   const nextWindow = upcomingWithin(plannedExpenses, daysWindow)
   const planning = monthlyPlanning(plannedExpenses)
   const alcanza = disponible - next30
+  const paidIds = new Set(transactions.filter((t) => t.planned_expense_id).map((t) => t.planned_expense_id))
 
   return (
     <div className="page">
@@ -243,7 +261,15 @@ export default function PlannedExpenses() {
                   <span className="muted">{frequencyLabel(e.frequency)}</span>
                   <span className="muted small">próximo: {formatDate(e.next_due)}</span>
                   <strong className="amount expense">{formatMoney(e.amount)}</strong>
+                  {paidIds.has(e.id) && (
+                    <span className="cat-pill" style={{ background: '#d1fae5', color: '#047857' }}>✓ Pagado</span>
+                  )}
                   <div className="row-actions">
+                    {paidIds.has(e.id) && (
+                      <button className="btn btn-sm btn-outline" onClick={() => undoPaid(e)} title="Desmarcar el pago registrado">
+                        <RotateCcw size={13} /> Desmarcar
+                      </button>
+                    )}
                     <button className="icon-btn" onClick={() => openEdit(e)} aria-label="Editar"><Pencil size={15} /></button>
                     <button className="icon-btn danger" onClick={() => handleDelete(e)} aria-label="Eliminar"><Trash2 size={15} /></button>
                   </div>
@@ -335,6 +361,7 @@ export default function PlannedExpenses() {
         defaultAmount={payTarget ? payTarget.amount : ''}
         defaultAccountId={payTarget?.account_id || ''}
         defaultCategoryId={payTarget?.category_id || ''}
+        extraInsert={payTarget ? { planned_expense_id: payTarget.id, paid_previous_due: payTarget.next_due } : {}}
       />
     </div>
   )

@@ -33,6 +33,9 @@ alter table public.accounts add column if not exists pay_day integer;
 alter table public.accounts add column if not exists interest_rate numeric(6,2) not null default 0;
 alter table public.accounts add column if not exists icon text;
 alter table public.accounts add column if not exists bank text;
+
+alter table public.transactions add column if not exists planned_expense_id uuid;
+alter table public.transactions add column if not exists paid_previous_due date;
 alter table public.accounts add column if not exists fee_type text;
 alter table public.accounts add column if not exists fee_amount numeric(14,2);
 alter table public.accounts add column if not exists fee_day integer;
@@ -59,12 +62,15 @@ create table if not exists public.transactions (
   amount numeric(14,2) not null check (amount > 0),
   description text,
   date date not null default current_date,
+  planned_expense_id uuid references public.planned_expenses(id) on delete set null,
+  paid_previous_due date,
   created_at timestamptz not null default now()
 );
 
 create index if not exists idx_transactions_user_date on public.transactions(user_id, date desc);
 create index if not exists idx_transactions_account on public.transactions(account_id);
 create index if not exists idx_transactions_category on public.transactions(category_id);
+create index if not exists idx_transactions_planned_expense on public.transactions(planned_expense_id);
 
 -- Tabla de metas de ahorro
 create table if not exists public.goals (

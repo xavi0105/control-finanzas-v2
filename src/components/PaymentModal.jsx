@@ -4,7 +4,6 @@ import Modal from './Modal'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../context/ToastContext'
-import { isCredit } from '../utils/format'
 
 export default function PaymentModal({
   open,
@@ -16,7 +15,8 @@ export default function PaymentModal({
   defaultDescription = '',
   defaultAmount = '',
   defaultAccountId = '',
-  defaultCategoryId = ''
+  defaultCategoryId = '',
+  extraInsert = {}
 }) {
   const { user } = useAuth()
   const { showToast } = useToast()
@@ -32,10 +32,10 @@ export default function PaymentModal({
 
   useEffect(() => {
     if (!open) return
-    const debitAccount = accounts.find((a) => !isCredit(a))
+    const debitAccount = accounts.find((a) => a.type !== 'credito')
     setForm({
       date: dayjs().format('YYYY-MM-DD'),
-      account_id: defaultAccountId || debitAccount?.id || '',
+      account_id: defaultAccountId || debitAccount?.id || accounts[0]?.id || '',
       amount: defaultAmount === '' || defaultAmount === null || defaultAmount === undefined ? '' : String(defaultAmount),
       category_id: defaultCategoryId || '',
       description: defaultDescription || ''
@@ -48,7 +48,7 @@ export default function PaymentModal({
     e.preventDefault()
     setError('')
     if (!form.amount || Number(form.amount) <= 0) { setError('Ingresa un monto mayor a 0'); return }
-    if (!form.account_id) { setError('Selecciona la cuenta desde la que pagaste'); return }
+    if (!form.account_id) { setError('Selecciona la cuenta o tarjeta desde la que pagaste'); return }
     if (!form.date) { setError('Selecciona la fecha del pago'); return }
 
     setSaving(true)
@@ -59,7 +59,8 @@ export default function PaymentModal({
       type: 'expense',
       amount: Number(form.amount),
       description: form.description.trim() || 'Pago',
-      date: form.date
+      date: form.date,
+      ...extraInsert
     })
     setSaving(false)
     if (res.error) { setError(res.error.message); return }
@@ -68,7 +69,6 @@ export default function PaymentModal({
     if (onPaid) onPaid()
   }
 
-  const debitAccounts = accounts.filter((a) => !isCredit(a))
   const expenseCategories = categories.filter((c) => c.type === 'expense')
 
   return (
@@ -116,12 +116,12 @@ export default function PaymentModal({
         </div>
 
         <div className="field">
-          <label htmlFor="pay-acc">Cuenta desde la que pagaste</label>
+          <label htmlFor="pay-acc">Cuenta o tarjeta desde la que pagaste</label>
           <select id="pay-acc" value={form.account_id} onChange={(e) => setForm({ ...form, account_id: e.target.value })} required>
             <option value="">Selecciona...</option>
-            {debitAccounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+            {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
-          <small className="muted">El pago se descuenta de esta cuenta como gasto.</small>
+          <small className="muted">El pago se descuenta de esa cuenta o tarjeta como gasto.</small>
         </div>
 
         <div className="field">
