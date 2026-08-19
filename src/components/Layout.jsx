@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, ArrowLeftRight, Wallet, PiggyBank, BarChart3, Settings as SettingsIcon, Sparkles, LogOut, Sun, Moon } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, Wallet, PiggyBank, BarChart3, Settings as SettingsIcon, Sparkles, LogOut, Sun, Moon, CalendarClock } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { useTheme } from '../context/ThemeContext'
@@ -10,6 +10,7 @@ const navItems = [
   { to: '/recomendador', label: 'Recomendador', icon: Sparkles },
   { to: '/transacciones', label: 'Transacciones', icon: ArrowLeftRight },
   { to: '/cuentas', label: 'Cuentas', icon: Wallet },
+  { to: '/gastos', label: 'Gastos fijos', icon: CalendarClock },
   { to: '/metas', label: 'Metas', icon: PiggyBank },
   { to: '/reportes', label: 'Reportes', icon: BarChart3 },
   { to: '/ajustes', label: 'Ajustes', icon: SettingsIcon }

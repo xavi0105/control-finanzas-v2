@@ -11,6 +11,7 @@ import Accounts from './pages/Accounts'
 import Goals from './pages/Goals'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
+import PlannedExpenses from './pages/PlannedExpenses'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="recomendador" element={<Recommender />} />
         <Route path="transacciones" element={<Transactions />} />
         <Route path="cuentas" element={<Accounts />} />
+        <Route path="gastos" element={<PlannedExpenses />} />
         <Route path="metas" element={<Goals />} />
         <Route path="reportes" element={<Reports />} />
         <Route path="ajustes" element={<Settings />} />

@@ -85,6 +85,20 @@ create table if not exists public.budgets (
   unique (user_id, category_id)
 );
 
+-- Gastos fijos y programados (renta, internet, agua, luz, gas, servicios, pagos de tarjeta...)
+create table if not exists public.planned_expenses (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  amount numeric(14,2) not null check (amount > 0),
+  frequency text not null default 'monthly' check (frequency in ('weekly', 'biweekly', 'monthly', 'bimonthly', 'quarterly', 'semiannual', 'annual')),
+  next_due date not null,
+  icon text,
+  notes text,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
 -- ============================================================
 -- ROW LEVEL SECURITY: cada usuario solo ve/edita sus datos
 -- ============================================================
@@ -94,13 +108,24 @@ alter table public.transactions enable row level security;
 alter table public.goals enable row level security;
 alter table public.budgets enable row level security;
 
-create policy "accounts_select" on public.accounts
+create policy "budgets_select" on public.budgets
   for select using (auth.uid() = user_id);
-create policy "accounts_insert" on public.accounts
+create policy "budgets_insert" on public.budgets
   for insert with check (auth.uid() = user_id);
-create policy "accounts_update" on public.accounts
+create policy "budgets_update" on public.budgets
   for update using (auth.uid() = user_id);
-create policy "accounts_delete" on public.accounts
+create policy "budgets_delete" on public.budgets
+  for delete using (auth.uid() = user_id);
+
+alter table public.planned_expenses enable row level security;
+
+create policy "planned_expenses_select" on public.planned_expenses
+  for select using (auth.uid() = user_id);
+create policy "planned_expenses_insert" on public.planned_expenses
+  for insert with check (auth.uid() = user_id);
+create policy "planned_expenses_update" on public.planned_expenses
+  for update using (auth.uid() = user_id);
+create policy "planned_expenses_delete" on public.planned_expenses
   for delete using (auth.uid() = user_id);
 
 create policy "categories_select" on public.categories

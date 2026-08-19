@@ -17,6 +17,7 @@ import { useFinance } from '../context/FinanceContext'
 import { formatMoney, computeBalance, isCredit, getCurrency, formatMonth, formatDate } from '../utils/format'
 import { monthKey, budgetProgress } from '../utils/budget'
 import { feeReminders, feeReminderText } from '../utils/fees'
+import { upcomingWithin } from '../utils/planned'
 import Loader from '../components/Loader'
 import StatCard from '../components/StatCard'
 
@@ -26,7 +27,7 @@ function deltaPct(current, previous) {
 }
 
 export default function Dashboard() {
-  const { accounts, categories, transactions, goals, budgets, loading } = useFinance()
+  const { accounts, categories, transactions, goals, budgets, plannedExpenses, loading } = useFinance()
   const currency = getCurrency()
   const now = dayjs()
   const thisMonth = now.format('YYYY-MM')
@@ -154,8 +155,13 @@ export default function Dashboard() {
       list.push({ type: 'warn', text: feeReminderText(r, formatMoney) })
     }
 
+    for (const e of upcomingWithin(plannedExpenses, 3)) {
+      const when = e.dueInDays === 0 ? 'HOY' : `en ${e.dueInDays} día(s)`
+      list.push({ type: 'info', text: `Pago programado de "${e.name}" (${formatMoney(e.amount)}) vence ${when}.` })
+    }
+
     return list
-  }, [budgets, categories, transactions, goals, accounts, thisMonth])
+  }, [budgets, categories, transactions, goals, accounts, thisMonth, plannedExpenses])
 
   const recent = transactions.slice(0, 6)
   const totalGoals = goals.reduce((s, g) => s + Number(g.saved_amount), 0)

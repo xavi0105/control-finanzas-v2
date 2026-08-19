@@ -11,6 +11,7 @@ export function FinanceProvider({ children }) {
   const [transactions, setTransactions] = useState([])
   const [goals, setGoals] = useState([])
   const [budgets, setBudgets] = useState([])
+  const [plannedExpenses, setPlannedExpenses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -19,15 +20,16 @@ export function FinanceProvider({ children }) {
     setLoading(true)
     setError(null)
     try {
-      const [accRes, catRes, traRes, goalRes, budRes] = await Promise.all([
+      const [accRes, catRes, traRes, goalRes, budRes, planRes] = await Promise.all([
         supabase.from('accounts').select('*').order('name'),
         supabase.from('categories').select('*').order('type', { ascending: true }).order('name'),
         supabase.from('transactions').select('*').order('date', { ascending: false }).limit(1000),
         supabase.from('goals').select('*').order('created_at'),
-        supabase.from('budgets').select('*')
+        supabase.from('budgets').select('*'),
+        supabase.from('planned_expenses').select('*').order('next_due')
       ])
 
-      for (const res of [accRes, catRes, traRes, goalRes, budRes]) {
+      for (const res of [accRes, catRes, traRes, goalRes, budRes, planRes]) {
         if (res.error) throw res.error
       }
 
@@ -36,6 +38,7 @@ export function FinanceProvider({ children }) {
       setTransactions(traRes.data)
       setGoals(goalRes.data)
       setBudgets(budRes.data)
+      setPlannedExpenses(planRes.data)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -51,6 +54,7 @@ export function FinanceProvider({ children }) {
       setTransactions([])
       setGoals([])
       setBudgets([])
+      setPlannedExpenses([])
       setLoading(false)
     }
   }, [user, loadAll])
@@ -61,6 +65,7 @@ export function FinanceProvider({ children }) {
     transactions,
     goals,
     budgets,
+    plannedExpenses,
     loading,
     error,
     reload: loadAll

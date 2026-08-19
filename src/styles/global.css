@@ -425,6 +425,10 @@ button.chip:hover { filter: brightness(1.2); }
 .bar-track { flex: 1; height: 12px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
 .bar-fill { height: 100%; background: linear-gradient(90deg, var(--indigo-600), var(--green)); border-radius: 999px; }
 
+/* ---------- Gastos programados ---------- */
+.account-card-icon.small { width: 28px; height: 28px; font-size: 0.95rem; display: inline-flex; vertical-align: middle; margin-right: 0.2rem; }
+.planned-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
 /* ---------- Presupuestos ---------- */
 .budget-form { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.1rem; }
 .budget-form select, .budget-form input {
