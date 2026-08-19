@@ -1,4 +1,4 @@
-const CACHE_NAME = 'opticard-v1'
+const CACHE_NAME = 'control-finanzas-v2'
 const APP_SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png']
 
 self.addEventListener('install', (event) => {

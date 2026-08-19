@@ -1,6 +1,6 @@
 {
-  "name": "OptiCard - Control de Finanzas",
-  "short_name": "OptiCard",
+  "name": "Control Financiero Personal",
+  "short_name": "Finanzas",
   "description": "Controla tus cuentas, tarjetas, gastos, ingresos y metas de ahorro con un dashboard inteligente.",
   "start_url": "/",
   "scope": "/",

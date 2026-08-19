@@ -8,6 +8,8 @@ import Modal from '../components/Modal'
 import Loader from '../components/Loader'
 import { useToast } from '../context/ToastContext'
 
+const ACCOUNT_ICONS = ['💳', '🏦', '👛', '💰', '🏠', '📱', '🏝️', '🪙', '💵', '🏧', '🐷', '🌱']
+
 const emptyForm = {
   name: '',
   type: 'ahorro',
@@ -16,7 +18,18 @@ const emptyForm = {
   credit_limit: '',
   cut_day: '',
   pay_day: '',
-  interest_rate: ''
+  interest_rate: '',
+  icon: '',
+  fee_enabled: false,
+  fee_type: 'annual',
+  fee_amount: '',
+  fee_day: '',
+  fee_month: '',
+  reminder_days: 7
+}
+
+function accountIcon(a) {
+  return a.icon || (isCredit(a) ? '💳' : '🏦')
 }
 
 export default function Accounts() {
@@ -56,7 +69,14 @@ export default function Accounts() {
       credit_limit: a.credit_limit ?? '',
       cut_day: a.cut_day ?? '',
       pay_day: a.pay_day ?? '',
-      interest_rate: a.interest_rate ?? ''
+      interest_rate: a.interest_rate ?? '',
+      icon: a.icon || '',
+      fee_enabled: Boolean(a.fee_type),
+      fee_type: a.fee_type || 'annual',
+      fee_amount: a.fee_amount ?? '',
+      fee_day: a.fee_day ?? '',
+      fee_month: a.fee_month ?? '',
+      reminder_days: a.reminder_days ?? 7
     })
     setError('')
     setModalOpen(true)
@@ -76,7 +96,13 @@ export default function Accounts() {
       credit_limit: form.credit_limit === '' ? null : Number(form.credit_limit),
       cut_day: form.cut_day === '' ? null : Number(form.cut_day),
       pay_day: form.pay_day === '' ? null : Number(form.pay_day),
-      interest_rate: form.interest_rate === '' ? 0 : Number(form.interest_rate)
+      interest_rate: form.interest_rate === '' ? 0 : Number(form.interest_rate),
+      icon: form.icon || null,
+      fee_type: form.fee_enabled ? form.fee_type : null,
+      fee_amount: form.fee_enabled && form.fee_amount !== '' ? Number(form.fee_amount) : null,
+      fee_day: form.fee_enabled && form.fee_day !== '' ? Number(form.fee_day) : null,
+      fee_month: form.fee_enabled && form.fee_type === 'annual' && form.fee_month !== '' ? Number(form.fee_month) : null,
+      reminder_days: form.fee_enabled && form.reminder_days !== '' ? Number(form.reminder_days) : 7
     }
     const res = editing
       ? await supabase.from('accounts').update(payload).eq('id', editing.id)
@@ -134,7 +160,7 @@ export default function Accounts() {
               className={`card account-card${isCredit(a) ? ' credit' : ''}${a.balance < 0 ? ' negative' : ''}`}
             >
               <div className="account-card-head">
-                <span className="account-card-icon">{isCredit(a) ? '💳' : '🏦'}</span>
+                <span className="account-card-icon">{accountIcon(a)}</span>
                 <div>
                   <h3>{a.name}</h3>
                   <small className="muted">{accountTypeLabel(a.type)}</small>
@@ -153,6 +179,11 @@ export default function Accounts() {
                     {a.credit_limit > 0 && <span className="cat-pill" style={{ background: '#fef3c7', color: '#b45309' }}>Límite {formatMoney(a.credit_limit)}</span>}
                     {a.cut_day && <span className="cat-pill" style={{ background: '#e0e7ff', color: '#4338ca' }}>Corte día {a.cut_day}</span>}
                     {a.pay_day && <span className="cat-pill" style={{ background: '#d1fae5', color: '#047857' }}>Pago día {a.pay_day}</span>}
+                    {a.fee_type && (
+                      <span className="cat-pill" style={{ background: '#fee2e2', color: '#b91c1c' }}>
+                        ⏰ Comisión {a.fee_type === 'annual' ? 'anual' : 'mensual'}: {formatMoney(a.fee_amount || 0)}
+                      </span>
+                    )}
                   </div>
                 </>
               ) : (
@@ -211,6 +242,22 @@ export default function Accounts() {
             </select>
           </div>
 
+          <div className="field">
+            <label>Icono de la cuenta o tarjeta</label>
+            <div className="icon-picker">
+              {ACCOUNT_ICONS.map((ic) => (
+                <button
+                  key={ic}
+                  type="button"
+                  className={`icon-pick${form.icon === ic ? ' active' : ''}`}
+                  onClick={() => setForm({ ...form, icon: ic })}
+                >
+                  {ic}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {isCreditForm ? (
             <div className="credit-fields">
               <div className="form-row">
@@ -233,6 +280,57 @@ export default function Accounts() {
                   <input id="acc-pay" type="number" min="1" max="31" value={form.pay_day} onChange={(e) => setForm({ ...form, pay_day: e.target.value })} placeholder="Ej. 5" />
                 </div>
               </div>
+
+              <div className="field">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={form.fee_enabled}
+                    onChange={(e) => setForm({ ...form, fee_enabled: e.target.checked })}
+                  />
+                  Recordarme la comisión de la tarjeta (mensual o anual)
+                </label>
+              </div>
+
+              {form.fee_enabled && (
+                <div className="credit-fields fee-fields">
+                  <div className="form-row">
+                    <div className="field">
+                      <label htmlFor="acc-fee-type">Tipo de comisión</label>
+                      <select id="acc-fee-type" value={form.fee_type} onChange={(e) => setForm({ ...form, fee_type: e.target.value })}>
+                        <option value="annual">Anual</option>
+                        <option value="monthly">Mensual</option>
+                      </select>
+                    </div>
+                    <div className="field">
+                      <label htmlFor="acc-fee-amount">Monto de la comisión</label>
+                      <input id="acc-fee-amount" type="number" min="0" value={form.fee_amount} onChange={(e) => setForm({ ...form, fee_amount: e.target.value })} placeholder="0.00" />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    {form.fee_type === 'annual' ? (
+                      <div className="field">
+                        <label htmlFor="acc-fee-month">Mes de cobro</label>
+                        <select id="acc-fee-month" value={form.fee_month} onChange={(e) => setForm({ ...form, fee_month: e.target.value })}>
+                          <option value="">Selecciona mes...</option>
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                      </div>
+                    ) : (
+                      <div className="field" />
+                    )}
+                    <div className="field">
+                      <label htmlFor="acc-fee-day">Día de cobro</label>
+                      <input id="acc-fee-day" type="number" min="1" max="31" value={form.fee_day} onChange={(e) => setForm({ ...form, fee_day: e.target.value })} placeholder="Ej. 20" />
+                    </div>
+                  </div>
+                  <div className="field">
+                    <label htmlFor="acc-reminder-days">Anticipación del recordatorio (días)</label>
+                    <input id="acc-reminder-days" type="number" min="0" max="60" value={form.reminder_days} onChange={(e) => setForm({ ...form, reminder_days: e.target.value })} />
+                    <small className="muted">Recibirás alertas en la app y por correo este número de días antes del cobro.</small>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="debit-fields">

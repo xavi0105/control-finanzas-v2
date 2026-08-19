@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Plus, Pencil, Trash2, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, ScanLine } from 'lucide-react'
 import dayjs from 'dayjs'
 import { useFinance } from '../context/FinanceContext'
 import { useAuth } from '../context/AuthContext'
@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 import { formatMoney, formatDate, TYPE_LABELS } from '../utils/format'
 import Modal from '../components/Modal'
 import Loader from '../components/Loader'
+import OcrScanner from '../components/OcrScanner'
 import { useToast } from '../context/ToastContext'
 
 const emptyForm = {
@@ -23,6 +24,7 @@ export default function Transactions() {
   const { accounts, categories, transactions, loading, reload } = useFinance()
   const { showToast } = useToast()
   const [modalOpen, setModalOpen] = useState(false)
+  const [ocrOpen, setOcrOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
@@ -123,9 +125,14 @@ export default function Transactions() {
           <h2>Transacciones</h2>
           <p className="muted">{filtered.length} registros</p>
         </div>
-        <button className="btn btn-primary" onClick={openCreate}>
-          <Plus size={16} /> Nueva transacción
-        </button>
+        <div className="page-actions">
+          <button className="btn btn-outline" onClick={() => setOcrOpen(true)}>
+            <ScanLine size={16} /> Escanear recibo
+          </button>
+          <button className="btn btn-primary" onClick={openCreate}>
+            <Plus size={16} /> Nueva transacción
+          </button>
+        </div>
       </div>
 
       <div className="filters card">
@@ -297,6 +304,15 @@ export default function Transactions() {
           </div>
         </form>
       </Modal>
+
+      <OcrScanner
+        open={ocrOpen}
+        onClose={() => setOcrOpen(false)}
+        accounts={accounts}
+        categories={categories}
+        userId={user.id}
+        onSaved={reload}
+      />
     </div>
   )
 }

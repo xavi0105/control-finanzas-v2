@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, BellRing } from 'lucide-react'
+import { ArrowRight, BellRing, Mail } from 'lucide-react'
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -16,6 +16,9 @@ import dayjs from 'dayjs'
 import { useFinance } from '../context/FinanceContext'
 import { formatMoney, computeBalance, isCredit, getCurrency, formatMonth, formatDate } from '../utils/format'
 import { monthKey, budgetProgress } from '../utils/budget'
+import { feeReminders, feeReminderText } from '../utils/fees'
+import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 import Loader from '../components/Loader'
 import StatCard from '../components/StatCard'
 
@@ -26,6 +29,8 @@ function deltaPct(current, previous) {
 
 export default function Dashboard() {
   const { accounts, categories, transactions, goals, budgets, loading } = useFinance()
+  const { session } = useAuth()
+  const { showToast } = useToast()
   const currency = getCurrency()
   const now = dayjs()
   const thisMonth = now.format('YYYY-MM')
@@ -149,8 +154,43 @@ export default function Dashboard() {
       }
     }
 
+    for (const r of feeReminders(accounts)) {
+      list.push({ type: 'warn', text: feeReminderText(r, formatMoney) })
+    }
+
     return list
   }, [budgets, categories, transactions, goals, accounts, thisMonth])
+
+  const sendFeeEmails = async () => {
+    const reminders = feeReminders(accounts)
+    if (reminders.length === 0) {
+      showToast('No hay comisiones por recordar ahora.', '📭')
+      return
+    }
+    if (!session?.access_token) {
+      showToast('Sesión no disponible.', '❌')
+      return
+    }
+    try {
+      const payload = reminders.map((r) => ({
+        account: r.account.name,
+        feeType: r.account.fee_type,
+        amount: Number(r.account.fee_amount || 0),
+        due: r.due.format('YYYY-MM-DD'),
+        dueInDays: r.dueInDays
+      }))
+      const res = await fetch('/.netlify/functions/send-fee-alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken: session.access_token, reminders: payload })
+      })
+      if (!res.ok) throw new Error((await res.text()).slice(0, 300) || 'Error del servidor')
+      const data = await res.json()
+      showToast(data.sent > 0 ? `${data.sent} recordatorio(s) enviados a tu correo.` : (data.message || 'Sin envíos.'), '📧')
+    } catch (err) {
+      showToast('No se pudieron enviar los correos: ' + err.message, '❌')
+    }
+  }
 
   const recent = transactions.slice(0, 6)
   const totalGoals = goals.reduce((s, g) => s + Number(g.saved_amount), 0)
@@ -218,7 +258,9 @@ export default function Dashboard() {
         <section className="card">
           <div className="card-head">
             <h3><BellRing size={16} /> Notificaciones ({notifications.length})</h3>
-            <span className="muted small">Basadas en tus datos</span>
+            <button className="btn btn-outline btn-sm" onClick={sendFeeEmails}>
+              <Mail size={14} /> Enviar recordatorios por correo
+            </button>
           </div>
           <div className="notif-list">
             {notifications.slice(0, 8).map((n, i) => (

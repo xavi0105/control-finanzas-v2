@@ -25,10 +25,6 @@ export default function Recommender() {
   const [monto, setMonto] = useState(1850)
   const [tipoPago, setTipoPago] = useState('contado')
 
-  const [msiMonto, setMsiMonto] = useState(12000)
-  const [msiPlazo, setMsiPlazo] = useState(12)
-  const [msiTasa, setMsiTasa] = useState(13.5)
-
   const currency = getCurrency()
 
   const cashbackAccounts = useMemo(
@@ -98,25 +94,6 @@ export default function Recommender() {
 
     return { account: best, reason: bestReason, benefit: bestBenefit, days: bestDays }
   }, [accounts, transactions, fecha, categoria, monto, cashbackAccounts])
-
-  const msiResult = useMemo(() => {
-    const montoN = Number(msiMonto) || 0
-    const plazo = Number(msiPlazo) || 12
-    const tasa = (Number(msiTasa) || 0) / 100 / 12
-    const pago = plazo > 0 ? montoN / plazo : 0
-    let saldo = montoN
-    let rendimiento = 0
-    const rows = []
-    for (let i = 1; i <= plazo; i++) {
-      const rend = saldo * tasa
-      rendimiento += rend
-      saldo += rend
-      const antes = saldo
-      saldo -= pago
-      rows.push({ mes: i, saldoAntes: antes, rendimiento: rend, pago, remanente: Math.max(0, saldo) })
-    }
-    return { pago, rendimiento, descuento: montoN > 0 ? (rendimiento / montoN) * 100 : 0, rows }
-  }, [msiMonto, msiPlazo, msiTasa])
 
   const registrarSugerencia = async () => {
     if (!evalResult?.account) return
@@ -206,67 +183,6 @@ export default function Recommender() {
           )}
         </section>
       </div>
-
-      <section className="card">
-        <div className="card-head">
-          <h3>🧮 Simulador MSI + rendimiento</h3>
-          <p className="muted small">Compra a meses sin intereses y deja tu dinero generando rendimiento.</p>
-        </div>
-        <div className="grid-3">
-          <div className="field">
-            <label>Monto total ({currency})</label>
-            <input type="number" value={msiMonto} onChange={(e) => setMsiMonto(e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Plazo (meses)</label>
-            <select value={msiPlazo} onChange={(e) => setMsiPlazo(e.target.value)}>
-              {[3, 6, 12, 18, 24].map((n) => <option key={n} value={n}>{n} meses</option>)}
-            </select>
-          </div>
-          <div className="field">
-            <label>Tasa anual de tu cajita (% APR)</label>
-            <input type="number" step="0.1" value={msiTasa} onChange={(e) => setMsiTasa(e.target.value)} />
-          </div>
-        </div>
-        <div className="grid-3 msi-cards">
-          <div className="msi-card">
-            <p className="muted small">Pago mensual requerido</p>
-            <strong>{formatMoney(msiResult.pago)}</strong>
-          </div>
-          <div className="msi-card green">
-            <p className="muted small">Rendimiento acumulado</p>
-            <strong className="text-success">+{formatMoney(msiResult.rendimiento)}</strong>
-          </div>
-          <div className="msi-card indigo">
-            <p className="muted small">Descuento efectivo</p>
-            <strong className="text-indigo">{msiResult.descuento.toFixed(2)}%</strong>
-          </div>
-        </div>
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Mes</th>
-                <th className="align-right">Saldo en cajita</th>
-                <th className="align-right">Rendimiento</th>
-                <th className="align-right">Pago retirado</th>
-                <th className="align-right">Remanente</th>
-              </tr>
-            </thead>
-            <tbody>
-              {msiResult.rows.filter((r) => r.mes <= 4 || r.mes === msiResult.rows.length).map((r) => (
-                <tr key={r.mes}>
-                  <td className="nowrap">Mes {r.mes}</td>
-                  <td className="align-right">{formatMoney(r.saldoAntes)}</td>
-                  <td className="align-right text-success">+{formatMoney(r.rendimiento)}</td>
-                  <td className="align-right text-danger">−{formatMoney(r.pago)}</td>
-                  <td className="align-right">{formatMoney(r.remanente)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
     </div>
   )
 }

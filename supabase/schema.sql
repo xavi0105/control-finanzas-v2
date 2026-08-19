@@ -15,6 +15,12 @@ create table if not exists public.accounts (
   cut_day integer,
   pay_day integer,
   interest_rate numeric(6,2) not null default 0,
+  icon text,
+  fee_type text check (fee_type in ('monthly', 'annual')),
+  fee_amount numeric(14,2),
+  fee_day integer,
+  fee_month integer,
+  reminder_days integer default 7,
   created_at timestamptz not null default now()
 );
 
@@ -24,6 +30,12 @@ alter table public.accounts add column if not exists credit_limit numeric(14,2);
 alter table public.accounts add column if not exists cut_day integer;
 alter table public.accounts add column if not exists pay_day integer;
 alter table public.accounts add column if not exists interest_rate numeric(6,2) not null default 0;
+alter table public.accounts add column if not exists icon text;
+alter table public.accounts add column if not exists fee_type text;
+alter table public.accounts add column if not exists fee_amount numeric(14,2);
+alter table public.accounts add column if not exists fee_day integer;
+alter table public.accounts add column if not exists fee_month integer;
+alter table public.accounts add column if not exists reminder_days integer default 7;
 
 -- Tabla de categorías (ingresos y gastos)
 create table if not exists public.categories (

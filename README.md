@@ -1,4 +1,4 @@
-# 💳 OptiCard · Control de Finanzas
+# 📊 Control Financiero Personal
 
 Aplicación web de control financiero personal con React + Vite + Supabase, lista para desplegar en **Netlify**.
 

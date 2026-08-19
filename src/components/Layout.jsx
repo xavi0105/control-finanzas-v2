@@ -61,12 +61,12 @@ export default function Layout() {
       <header className="topbar">
         <div className="topbar-inner">
           <div className="brand">
-            <div className="brand-logo">💳</div>
+            <div className="brand-logo">📊</div>
             <div>
               <h1 className="brand-title">
-                OptiCard <span className="brand-badge">PRO · Finanzas</span>
+                Control Financiero Personal
               </h1>
-              <p className="brand-sub">Control de cuentas, gastos y metas de ahorro</p>
+              <p className="brand-sub">Cuentas, gastos, metas y alertas inteligentes</p>
             </div>
           </div>
 
