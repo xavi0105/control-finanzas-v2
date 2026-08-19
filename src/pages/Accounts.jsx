@@ -7,6 +7,7 @@ import { formatMoney, computeBalance, isCredit, accountBalanceDisplay, ACCOUNT_T
 import { BANKS, bankByCode, bankBadgeStyle } from '../utils/banks'
 import Modal from '../components/Modal'
 import Loader from '../components/Loader'
+import PaymentModal from '../components/PaymentModal'
 import { useToast } from '../context/ToastContext'
 
 const ACCOUNT_ICONS = ['💳', '🏦', '👛', '💰', '🏠', '📱', '🏝️', '🪙', '💵', '🏧', '🐷', '🌱']
@@ -36,7 +37,7 @@ function accountIcon(a) {
 
 export default function Accounts() {
   const { user } = useAuth()
-  const { accounts, transactions, loading, reload } = useFinance()
+  const { accounts, categories, transactions, loading, reload } = useFinance()
   const { showToast } = useToast()
 
   const [modalOpen, setModalOpen] = useState(false)
@@ -44,6 +45,7 @@ export default function Accounts() {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [payAcc, setPayAcc] = useState(null)
 
   const withBalances = accounts.map((a) => ({
     ...a,
@@ -193,6 +195,9 @@ export default function Accounts() {
                       </span>
                     )}
                   </div>
+                  <button className="btn btn-sm btn-primary" style={{ marginTop: '0.6rem' }} onClick={() => setPayAcc(a)}>
+                    💸 Registrar pago de la tarjeta
+                  </button>
                 </>
               ) : (
                 <>
@@ -380,6 +385,17 @@ export default function Accounts() {
           </div>
         </form>
       </Modal>
+
+      <PaymentModal
+        open={Boolean(payAcc)}
+        onClose={() => setPayAcc(null)}
+        onPaid={reload}
+        accounts={accounts}
+        categories={categories}
+        title={`Registrar pago de ${payAcc?.name || 'tarjeta'}`}
+        defaultDescription={payAcc ? `Pago tarjeta ${payAcc.name}` : ''}
+        defaultAmount={payAcc ? Math.max(0, -payAcc.balance) : ''}
+      />
     </div>
   )
 }

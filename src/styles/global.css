@@ -808,6 +808,8 @@ button.chip:hover { filter: brightness(1.2); }
   font-size: 0.85rem;
   font-weight: 600;
 }
+.notif > span:nth-child(2) { flex: 1; }
+.notif .btn { flex: none; }
 .notif-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 .notif-danger { background: rgba(239, 68, 68, 0.07); border-color: rgba(239, 68, 68, 0.3); }
 .notif-danger .notif-dot { background: var(--red); }

@@ -8,6 +8,7 @@ import { FREQUENCIES, EXPENSE_ICONS, frequencyLabel, advanceDue, upcomingWithin,
 import Modal from '../components/Modal'
 import Loader from '../components/Loader'
 import StatCard from '../components/StatCard'
+import PaymentModal from '../components/PaymentModal'
 import { useToast } from '../context/ToastContext'
 import dayjs from 'dayjs'
 
@@ -33,6 +34,7 @@ export default function PlannedExpenses() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [daysWindow, setDaysWindow] = useState(60)
+  const [payTarget, setPayTarget] = useState(null)
 
   const openCreate = () => {
     setEditing(null)
@@ -86,27 +88,14 @@ export default function PlannedExpenses() {
     showToast(editing ? 'Gasto actualizado.' : 'Gasto programado.', '📅')
   }
 
-  const markPaid = async (e) => {
-    const accountId = e.account_id || accounts.find((a) => !isCredit(a))?.id
-    if (!accountId) {
-      showToast('Asigna una cuenta a este gasto (o crea una cuenta de débito).', '⚠️')
-      return
-    }
-    const next = advanceDue(e.next_due, e.frequency || 'monthly')
-    const tx = await supabase.from('transactions').insert({
-      user_id: user.id,
-      account_id: accountId,
-      category_id: e.category_id || null,
-      type: 'expense',
-      amount: Number(e.amount),
-      description: e.name,
-      date: dayjs().format('YYYY-MM-DD')
-    })
-    if (tx.error) { showToast(tx.error.message, '❌'); return }
-    const { error: err } = await supabase.from('planned_expenses').update({ next_due: next }).eq('id', e.id)
+  const handlePaid = async () => {
+    if (!payTarget) return
+    const next = advanceDue(payTarget.next_due, payTarget.frequency || 'monthly')
+    const { error: err } = await supabase.from('planned_expenses').update({ next_due: next }).eq('id', payTarget.id)
     if (err) { showToast(err.message, '❌'); return }
+    setPayTarget(null)
     reload()
-    showToast(`Pago de "${e.name}" registrado. Siguiente: ${formatDate(next)}.`, '✅')
+    showToast(`Pago registrado. Siguiente fecha de "${payTarget.name}": ${formatDate(next)}.`, '📅')
   }
 
   const handleDelete = async (e) => {
@@ -231,7 +220,7 @@ export default function PlannedExpenses() {
                         <td className="align-right amount expense">{formatMoney(e.amount)}</td>
                         <td className="align-right">
                           <div className="row-actions">
-                            <button className="btn btn-sm btn-primary" onClick={() => markPaid(e)} title="Marcar como pagado"><Check size={13} /> Pagado</button>
+                            <button className="btn btn-sm btn-primary" onClick={() => setPayTarget(e)} title="Registrar el pago y descontar de tu cuenta"><Check size={13} /> Pagado</button>
                             <button className="icon-btn" onClick={() => openEdit(e)} aria-label="Editar"><Pencil size={15} /></button>
                             <button className="icon-btn danger" onClick={() => handleDelete(e)} aria-label="Eliminar"><Trash2 size={15} /></button>
                           </div>
@@ -334,6 +323,19 @@ export default function PlannedExpenses() {
           </div>
         </form>
       </Modal>
+
+      <PaymentModal
+        open={Boolean(payTarget)}
+        onClose={() => setPayTarget(null)}
+        onPaid={handlePaid}
+        accounts={accounts}
+        categories={categories}
+        title={`Registrar pago de "${payTarget?.name || ''}"`}
+        defaultDescription={payTarget?.name || ''}
+        defaultAmount={payTarget ? payTarget.amount : ''}
+        defaultAccountId={payTarget?.account_id || ''}
+        defaultCategoryId={payTarget?.category_id || ''}
+      />
     </div>
   )
 }

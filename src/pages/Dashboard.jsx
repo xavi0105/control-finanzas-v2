@@ -20,6 +20,8 @@ import { feeReminders, feeReminderText } from '../utils/fees'
 import { upcomingWithin, frequencyLabel } from '../utils/planned'
 import Loader from '../components/Loader'
 import StatCard from '../components/StatCard'
+import PaymentModal from '../components/PaymentModal'
+import { useState } from 'react'
 
 function deltaPct(current, previous) {
   if (!previous || previous === 0) return current === 0 ? null : null
@@ -27,11 +29,12 @@ function deltaPct(current, previous) {
 }
 
 export default function Dashboard() {
-  const { accounts, categories, transactions, goals, budgets, plannedExpenses, loading } = useFinance()
+  const { accounts, categories, transactions, goals, budgets, plannedExpenses, loading, reload } = useFinance()
   const currency = getCurrency()
   const now = dayjs()
   const thisMonth = now.format('YYYY-MM')
   const prevMonth = now.subtract(1, 'month').format('YYYY-MM')
+  const [payCard, setPayCard] = useState(null)
 
   const metrics = useMemo(() => {
     let disponible = 0
@@ -143,7 +146,7 @@ export default function Dashboard() {
           const payDay = dayjs().date(acc.pay_day)
           const diff = payDay.diff(dayjs(), 'day')
           if (diff >= -3 && diff <= 7) {
-            list.push({ type: 'info', text: `Fecha límite de pago de "${acc.name}" (día ${acc.pay_day}) está cerca${diff < 0 ? ' (venció)' : ` en ${diff} día(s)`}.` })
+            list.push({ type: 'info', text: `Fecha límite de pago de "${acc.name}" (día ${acc.pay_day}) está cerca${diff < 0 ? ' (venció)' : ` en ${diff} día(s)`}.`, accountId: acc.id })
           }
         }
       } else if (computeBalance(acc, transactions) < 0) {
@@ -248,6 +251,11 @@ export default function Dashboard() {
               <div key={i} className={`notif notif-${n.type}`}>
                 <span className="notif-dot" />
                 <span>{n.text}</span>
+                {n.accountId && (
+                  <button className="btn btn-sm btn-primary" onClick={() => setPayCard(accounts.find((a) => a.id === n.accountId))}>
+                    Registrar pago
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -437,6 +445,17 @@ export default function Dashboard() {
           </div>
         </section>
       )}
+
+      <PaymentModal
+        open={Boolean(payCard)}
+        onClose={() => setPayCard(null)}
+        onPaid={reload}
+        accounts={accounts}
+        categories={categories}
+        title={`Registrar pago de ${payCard?.name || 'tarjeta'}`}
+        defaultDescription={payCard ? `Pago tarjeta ${payCard.name}` : ''}
+        defaultAmount={payCard ? Math.max(0, -computeBalance(payCard, transactions)) : ''}
+      />
     </div>
   )
 }
