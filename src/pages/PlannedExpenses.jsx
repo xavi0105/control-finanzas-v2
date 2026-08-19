@@ -17,7 +17,9 @@ const emptyForm = {
   frequency: 'monthly',
   next_due: dayjs().add(1, 'day').format('YYYY-MM-DD'),
   icon: '🧾',
-  notes: ''
+  notes: '',
+  category_id: '',
+  account_id: ''
 }
 
 export default function PlannedExpenses() {
@@ -47,7 +49,9 @@ export default function PlannedExpenses() {
       frequency: e.frequency || 'monthly',
       next_due: e.next_due,
       icon: e.icon || '🧾',
-      notes: e.notes || ''
+      notes: e.notes || '',
+      category_id: e.category_id || '',
+      account_id: e.account_id || ''
     })
     setError('')
     setModalOpen(true)
@@ -67,7 +71,9 @@ export default function PlannedExpenses() {
       frequency: form.frequency,
       next_due: form.next_due,
       icon: form.icon || null,
-      notes: form.notes.trim() || null
+      notes: form.notes.trim() || null,
+      category_id: form.category_id || null,
+      account_id: form.account_id || null
     }
     const res = editing
       ? await supabase.from('planned_expenses').update(payload).eq('id', editing.id)
@@ -81,11 +87,26 @@ export default function PlannedExpenses() {
   }
 
   const markPaid = async (e) => {
+    const accountId = e.account_id || accounts.find((a) => !isCredit(a))?.id
+    if (!accountId) {
+      showToast('Asigna una cuenta a este gasto (o crea una cuenta de débito).', '⚠️')
+      return
+    }
     const next = advanceDue(e.next_due, e.frequency || 'monthly')
+    const tx = await supabase.from('transactions').insert({
+      user_id: user.id,
+      account_id: accountId,
+      category_id: e.category_id || null,
+      type: 'expense',
+      amount: Number(e.amount),
+      description: e.name,
+      date: dayjs().format('YYYY-MM-DD')
+    })
+    if (tx.error) { showToast(tx.error.message, '❌'); return }
     const { error: err } = await supabase.from('planned_expenses').update({ next_due: next }).eq('id', e.id)
     if (err) { showToast(err.message, '❌'); return }
     reload()
-    showToast(`Pago de "${e.name}" marcado. Siguiente: ${formatDate(next)}.`, '✅')
+    showToast(`Pago de "${e.name}" registrado. Siguiente: ${formatDate(next)}.`, '✅')
   }
 
   const handleDelete = async (e) => {
@@ -292,6 +313,23 @@ export default function PlannedExpenses() {
             <div className="field">
               <label htmlFor="pe-notes">Nota (opcional)</label>
               <input id="pe-notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Ej. contrato, cuenta, número..." />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="field">
+              <label htmlFor="pe-cat">Categoría (al pagar se registra el gasto)</label>
+              <select id="pe-cat" value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
+                <option value="">Sin categoría</option>
+                {categories.filter((c) => c.type === 'expense').map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="pe-acc">Cuenta que paga (opcional)</label>
+              <select id="pe-acc" value={form.account_id} onChange={(e) => setForm({ ...form, account_id: e.target.value })}>
+                <option value="">Usar primera cuenta</option>
+                {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
             </div>
           </div>
         </form>

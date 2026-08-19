@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { FileJson, FileSpreadsheet } from 'lucide-react'
 import {
   ResponsiveContainer,
   LineChart,
@@ -19,15 +20,28 @@ import dayjs from 'dayjs'
 import { useFinance } from '../context/FinanceContext'
 import { formatMoney, formatMonth, getCurrency, computeBalance } from '../utils/format'
 import { monthKey, budgetProgress } from '../utils/budget'
+import { downloadBlob, transactionsToCSV, dataToJSON } from '../utils/export'
 import Loader from '../components/Loader'
 
 const PALETTE = ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#6366f1', '#f97316', '#22c55e', '#eab308', '#06b6d4']
 
 export default function Reports() {
-  const { transactions, categories, budgets, accounts, loading } = useFinance()
+  const { transactions, categories, budgets, accounts, goals, plannedExpenses, loading } = useFinance()
   const currency = getCurrency()
   const [monthsBack, setMonthsBack] = useState(12)
   const [year, setYear] = useState(dayjs().year())
+
+  const handleCSV = () => {
+    downloadBlob(`transacciones-${dayjs().format('YYYY-MM-DD')}.csv`, transactionsToCSV(transactions, categories, accounts), 'text/csv')
+  }
+
+  const handleJSON = () => {
+    downloadBlob(
+      `respaldo-finanzas-${dayjs().format('YYYY-MM-DD')}.json`,
+      dataToJSON({ accounts, categories, transactions, goals, budgets, plannedExpenses }),
+      'application/json'
+    )
+  }
 
   const range = useMemo(() => {
     const months = []
@@ -159,12 +173,20 @@ export default function Reports() {
           <h2>Reportes</h2>
           <p className="muted">Analiza tus ingresos y gastos</p>
         </div>
-        <div className="filter-buttons">
-          {[6, 12, 24].map((n) => (
-            <button key={n} className={`btn btn-sm ${monthsBack === n ? 'btn-primary' : 'btn-outline'}`} onClick={() => setMonthsBack(n)}>
-              {n} meses
-            </button>
-          ))}
+        <div className="page-actions">
+          <button className="btn btn-outline" onClick={handleCSV} title="Descargar transacciones en CSV">
+            <FileSpreadsheet size={16} /> CSV
+          </button>
+          <button className="btn btn-outline" onClick={handleJSON} title="Descargar respaldo completo en JSON">
+            <FileJson size={16} /> Respaldo
+          </button>
+          <div className="filter-buttons">
+            {[6, 12, 24].map((n) => (
+              <button key={n} className={`btn btn-sm ${monthsBack === n ? 'btn-primary' : 'btn-outline'}`} onClick={() => setMonthsBack(n)}>
+                {n} meses
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

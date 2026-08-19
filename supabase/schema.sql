@@ -95,6 +95,8 @@ create table if not exists public.planned_expenses (
   next_due date not null,
   icon text,
   notes text,
+  category_id uuid references public.categories(id) on delete set null,
+  account_id uuid references public.accounts(id) on delete set null,
   active boolean not null default true,
   created_at timestamptz not null default now()
 );
