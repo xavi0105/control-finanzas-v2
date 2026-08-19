@@ -24,7 +24,7 @@ const emptyForm = {
 
 export default function PlannedExpenses() {
   const { user } = useAuth()
-  const { accounts, transactions, plannedExpenses, loading, reload } = useFinance()
+  const { accounts, categories, transactions, plannedExpenses, loading, reload } = useFinance()
   const { showToast } = useToast()
 
   const [modalOpen, setModalOpen] = useState(false)

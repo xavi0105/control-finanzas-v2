@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import Layout from './components/Layout'
 import Loader from './components/Loader'
+import ErrorBoundary from './components/ErrorBoundary'
 import { FinanceProvider } from './context/FinanceContext'
 import AuthPage from './pages/AuthPage'
 import Dashboard from './pages/Dashboard'
@@ -29,7 +30,9 @@ export default function App() {
         element={
           <ProtectedRoute>
             <FinanceProvider>
-              <Layout />
+              <ErrorBoundary>
+                <Layout />
+              </ErrorBoundary>
             </FinanceProvider>
           </ProtectedRoute>
         }
