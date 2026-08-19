@@ -431,9 +431,9 @@ button.chip:hover { filter: brightness(1.2); }
 
 /* Badge de banco / emisor (mini-logo con colores de marca) */
 .bank-badge {
-  width: 42px; height: 42px; border-radius: 12px; flex: none;
+  min-width: 42px; max-width: 64px; height: 42px; padding: 0 0.5rem; border-radius: 12px; flex: none;
   display: inline-flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 0.72rem; letter-spacing: 0.02em; text-transform: uppercase;
+  font-weight: 800; font-size: 0.68rem; letter-spacing: 0.02em; text-transform: uppercase; text-align: center;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 .bank-picker { display: flex; flex-wrap: wrap; gap: 0.45rem; }
